@@ -3,21 +3,22 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 # Import both data tables into python using pandas. Set the index column to "MESS_DATUM" and parse the column values as dates. [1P]
-garmisch  = 
-zugspitze = 
+garmisch=pd.read_csv("data/produkt_klima_tag_20171010_20190412_01550.txt", parse_dates=["MESS_DATUM"], index_col="MESS_DATUM", sep=";")
+zugspitze=pd.read_csv("data/produkt_klima_tag_20171010_20190412_05792.txt", parse_dates=["MESS_DATUM"], index_col="MESS_DATUM", sep=";")
 
 # Clip the tables to the year 2018: [1P]
-garmisch  = 
-zugspitze = 
+garmisch  = garmisch["2018"]
+zugspitze = zugspitze["2018"]
 
 # Resample the temperature data to monthly averages (" TMK") and store them in simple lists: [1P]
-garmisch_agg  = 
-zugspitze_agg = 
+garmisch_agg = [garmisch[" TMK"].resample("1M").mean()]
+zugspitze_agg = [zugspitze[" TMK"].resample("1M").mean()]
 
 # Define a plotting function that draws a simple climate diagram
 # Add the arguments as mentioned in the docstring below [1P]
 # Set the default temperature range from -15°C to 20°C and the precipitation range from 0mm to 370mm [1P]
-def create_climate_diagram(...):
+def create_climate_diagram(df, temp_col,prec_col, title, filename, temp_min=-15,
+                           temp_max=20, prec_min=0, prec_max=370):
     """
     Draw a climate diagram.
     
@@ -47,7 +48,7 @@ def create_climate_diagram(...):
     The figure
     
     """
-
+    dfAgg = df.loc[:,[temp_col,prec_col]].resample("1M").agg({temp_col:"mean",prec_col:"sum"})
     fig = plt.figure(figsize=(10,8))
     plt.rcParams['font.size'] = 16
 
@@ -57,24 +58,31 @@ def create_climate_diagram(...):
     # Draw temperature values as a red line and precipitation values as blue bars: [1P]
     # Hint: Check out the matplotlib documentation how to plot barcharts. Try to directly set the correct
     #       x-axis labels (month shortnames).
-    ax2.bar(...)
-    ax1.plot(...)
-    
-    # Set appropiate limits to each y-axis using the function arguments: [1P]
-    ax2.
-    ax1.
-    
+    days = mdates.DayLocator(bymonthday=1)
+    monthFmt = mdates.DateFormatter("%b")
+    ax1.xaxis.set_major_locator(days)
+    ax1.xaxis.set_major_formatter(monthFmt)
+    ax2.xaxis.set_major_locator(days)
+    ax2.xaxis.set_major_formatter(monthFmt)
+
+    ax2.bar(dfAgg.index,height=dfAgg[prec_col],color="blue",width=20,label="precipitation")
+    ax1.plot(dfAgg[temp_col],color="red",label="temperature")
+
+ # Set appropiate limits to each y-axis using the function arguments: [1P]
+    ax2.set_ylim(prec_min,prec_max)
+    ax1.set_ylim(temp_min,temp_max)  
+
     # Set appropiate labels to each y-axis: [1P]
-    ax2.
-    ax1.
+    ax2.set_ylabel("Precipitation (mm)")
+    ax1.set_ylabel("Temperature (°C)")
 
     # Give your diagram the title from the passed arguments: [1P]
-    plt.title(...)
+    plt.title(title)
 
     # Save the figure as png image in the "output" folder with the given filename. [1P]
-    
+    plt.savefig(filename)
     return fig
 
 # Use this function to draw a climate diagram for 2018 for both stations and save the result: [1P]
-create_climate_diagram(...)
-create_climate_diagram(...)
+create_climate_diagram(df=garmisch, temp_col=" TMK", prec_col=" RSK", title="Climate Gamisch", filename="output/Garmisch.png", temp_min=-15, temp_max=20, prec_min=0, prec_max=370)
+create_climate_diagram(df=zugspitze, temp_col=" TMK", prec_col=" RSK", title="Climate Zugspitze", filename="output/Zugspitze.png", temp_min=-15, temp_max=20, prec_min=0, prec_max=370)
